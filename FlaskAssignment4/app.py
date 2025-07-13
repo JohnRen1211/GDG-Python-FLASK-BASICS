@@ -48,7 +48,16 @@ def kunwariLogin():
 
 #     return render_template("todo.html", tasks=tasks)
 
-   
+tasks = []  # empty list to store the to-do tasks
+
+@app.route('/todo', methods=['GET', 'POST'])
+def todo():
+    if request.method == "POST":
+        task = request.form.get("task")  # get task from form
+        if task:  # make sure task is not empty
+            tasks.append(task)
+    return render_template("todo.html", tasks=tasks)
+
 
 
 if __name__ == "__main__":
