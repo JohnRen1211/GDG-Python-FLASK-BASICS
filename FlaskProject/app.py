@@ -1,7 +1,4 @@
-# Oh no! This site is broken. 
-# Look for TODO comments and fill the 
-# underline placeholders with the correct code
-
+# Task created and done:
 import requests
 from flask import Flask, session, render_template, request, redirect, url_for
 from cs50 import SQL
@@ -9,24 +6,19 @@ import bcrypt
 import base64
 import hashlib
 
-# TODO 1: initialize SQLite for this app with the db name of user.db
-# Follow the 'https://cs50.readthedocs.io/libraries/cs50/python/' docs and look for sqlite `SQL` method
-# db = SQL("sqlite:///___")
+# ✅ TODO 1: initialize SQLite
+db = SQL("sqlite:///user.db")
 
 app = Flask(__name__)
-# TODO 2: generate a strong secret key
-# You can open a new terminal and copy+paste this code 
-# python -c 'import secrets; print(secrets.token_hex())'
-# Place the output as the value for app.secret_key
-# We need the secret key to make our server-side session secure
-app.secret_key = '___'
+
+# ✅ TODO 2: generate a strong secret key
+# You should generate your own, but here’s an example:
+app.secret_key = 'f1b8a51aaf264d7d914a887ad46d923a'  # ← replace with your own secure key
 
 @app.route('/')
 def home():
     if 'user' in session:
-        # Massive shoutout to MohammadReza Keikavousi for the fakestoreapi
         fake_store = requests.get("https://fakestoreapi.com/products?limit=20")
-        
         return render_template('index.html', fake_store=fake_store.json())
     return redirect(url_for('login'))
 
@@ -43,15 +35,13 @@ def login():
             return "Missing email or password", 400 
         
         try:
-            # TODO 3: use db.execute to get the user record referencing user's email, name this variable as user
-            # user = db.execute("SELECT * FROM ____ WHERE ___=?", ____)
+            # ✅ TODO 3: Get user by email
+            user = db.execute("SELECT * FROM users WHERE email = ?", email)
             
             if len(user) != 1:
                 return 'Invalid email', 400
 
-            # Use bcrypt to check the password hash
             if bcrypt.checkpw(base64.b64encode(hashlib.sha256(password.encode('utf-8')).digest()), user[0]['password']):
-                # set user session  
                 session['user'] = {'email': user[0]['email'], 'username': user[0]['username']}
             else:
                 return 'Invalid password', 400
@@ -77,19 +67,18 @@ def signup():
             return "Missing email, username, or password", 400 
         
         try:
-            # TODO 4: use db.execute to get the user record referencing user's email, name this variable as user
-            # user = db.execute('SELECT * FROM ___ WHERE ____=? ', __)
+            # ✅ TODO 4: Check if user exists
+            user = db.execute("SELECT * FROM users WHERE email = ?", email)
             
             if user:
                 return 'Email already exists', 400
             
-            # Hash the password and store it in database
+            # ✅ Hash password
             hash = bcrypt.hashpw(base64.b64encode(hashlib.sha256(password.encode('utf-8')).digest()), bcrypt.gensalt())
 
-            # TODO 5: insert the email and hash to the database
-            # db.execute('INSERT INTO __(__, ___, __) VALUES(?, ?, ?)', ___, __, ___)
+            # ✅ TODO 5: Insert new user
+            db.execute("INSERT INTO users (email, password, username) VALUES (?, ?, ?)", email, hash, username)
 
-            # add user to session
             session['user'] = {'email': email, 'username': username}
 
             return redirect(url_for('home'))
@@ -103,7 +92,6 @@ def signup():
 def settings():
     return render_template('settings.html')
 
-
 @app.route('/change-username', methods=['POST'])
 def update_username():
     if 'user' not in session:
@@ -112,15 +100,14 @@ def update_username():
     username = request.form.get('username')
 
     if not username:
-        return 'Failed change name', 400
+        return 'Failed to change name', 400
     
-    # TODO 6: update the username
-    # db.execute('UPDATE ___ SET _____=? WHERE _____=?', ______, session['user']['email'])
+    # ✅ TODO 6: Update username
+    db.execute("UPDATE users SET username = ? WHERE email = ?", username, session['user']['email'])
     session['user']['username'] = username
     session.modified = True
 
     return redirect(url_for('settings'))
-
 
 @app.route('/change-password', methods=['POST'])
 def update_password():
@@ -130,23 +117,24 @@ def update_password():
     password = request.form.get('password')
 
     if not password:
-        return 'Failed change password', 400
+        return 'Failed to change password', 400
     
     hash = bcrypt.hashpw(base64.b64encode(hashlib.sha256(password.encode('utf-8')).digest()), bcrypt.gensalt())
-    # TODO 7: update the password
-    # db.execute('UPDATE ___ SET _____=? WHERE _____=?', _____, session['user']['email'])
+
+    # ✅ TODO 7: Update password
+    db.execute("UPDATE users SET password = ? WHERE email = ?", hash, session['user']['email'])
 
     return redirect(url_for('settings'))
-
 
 @app.route('/delete-account', methods=['POST'])
 def delete_account():
     if 'user' not in session:
         return redirect(url_for('login'))
     
-    # TODO 8: update the username
-    # db.execute('DELETE FROM _____ WHERE ____=?', session['user']['email'])
+    # ✅ TODO 8: Delete user
+    db.execute("DELETE FROM users WHERE email = ?", session['user']['email'])
     session.pop('user', None)
+
     return redirect(url_for('login'))
 
 @app.route('/logout', methods=['POST'])

@@ -183,3 +183,4 @@
     ```
 
     By doing so, you will not be able to run the Flask app. Execute `.\.venv\Scripts\activate` again to open the virtual environment with Flask installed.
+
